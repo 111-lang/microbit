@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>micro:bit アラーム送信</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f4f7f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 320px;
+        }
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .input-group {
+            margin-bottom: 25px;
+        }
+        input[type="time"] {
+            font-size: 1.6rem;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            width: 80%;
+            text-align: center;
+            outline: none;
+        }
+        input[type="time"]:focus {
+            border-color: #007bff;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 88%;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .status {
+            margin-top: 20px;
+            padding: 12px;
+            background-color: #e9ecef;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            color: #495057;
+            text-align: left;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>micro:bit 時刻送信</h2>
+    
+    <div class="input-group">
+        <input type="time" id="alarmTime" value="07:00">
+    </div>
+    
+    <button onclick="sendToMicrobit()">micro:bitに送信</button>
+    
+    <div id="statusBox" class="status">状態: 未接続</div>
+</div>
+
+<script>
+// micro:bitの標準的なBluetooth UARTサービスとTXキャラクタリスティックのUUID
+const UART_SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
+const UART_TX_CHARACTERISTIC_UUID = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
+
+async function sendToMicrobit() {
+    const statusBox = document.getElementById('statusBox');
+    const timeValue = document.getElementById('alarmTime').value;
+    
+    if (!timeValue) {
+        alert('時刻を選択してください。');
+        return;
+    }
+
+    // 時刻を数値に分解
+    const timeParts = timeValue.split(':');
+    const hour = parseInt(timeParts[0], 10);
+    const minute = parseInt(timeParts[1], 10);
+
+    statusBox.innerHTML = "状態: micro:bitを探しています...";
+
+    try {
+        // 1. micro:bit デバイスの要求
+        const device = await navigator.bluetooth.requestDevice({
+            filters: [{ namePrefix: 'BBC micro:bit' }],
+            optionalServices: [UART_SERVICE_UUID]
+        });
+
+        statusBox.innerHTML = `状態: ${device.name} に接続中...`;
+
+        // 2. GATTサーバーへの接続
+        const server = await device.gatt.connect();
+
+        // 3. UARTサービスの取得
+        const service = await server.getPrimaryService(UART_SERVICE_UUID);
+
+        // 4. 書き込み用キャラクタリスティックの取得
+        const characteristic = await service.getCharacteristic(UART_TX_CHARACTERISTIC_UUID);
+
+        statusBox.innerHTML = `状態: データ送信中...`;
+
+        // 5. データを文字列にして送信（末尾に改行マーク \n を付与）
+        // 例: 7時30分なら "7,30\n" という文字列データになります
+        const sendText = `${hour},${minute}\n`;
+        const encoder = new TextEncoder();
+        const data = encoder.encode(sendText);
+
+        await characteristic.writeValue(data);
+
+        statusBox.innerHTML = `<strong>送信成功！</strong><br>送信データ: "${hour}, ${minute}"<br>接続先: ${device.name}`;
+
+        // 6. 送信後、自動的に切断
+        device.gatt.disconnect();
+
+    } catch (error) {
+        console.error(error);
+        statusBox.innerHTML = `<strong>エラー:</strong> ${error.message}<br><small>※micro:bitのペアリングモードや、ブラウザのHTTPS環境を確認してください。</small>`;
+    }
+}
+</script>
+
+</body>
+</html>
