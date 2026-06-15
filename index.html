@@ -86,15 +86,15 @@
         <span id="currentTimeDisp" class="display-value">--:--</span>
     </div>
 
-　　<label for="timeInput" style="display:block; text-align:left; font-size:0.9em; color:#4a5568; margin-bottom: 4px;">送信時刻:</label>
-    <input type="time" id="timeInput" value="08:00">
+　　<label for="timeInput" style="display:block; text-align:left; font-size:0.9em; color:#4a5568; margin-bottom: 4px;">設定時刻:</label>
+    <input type="time" id="timeInput1" value="08:00">
     
 　
     
 <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;">
     
-    <label for="timeInput" style="display:block; text-align:left; font-size:0.9em; color:#718096;">設定時刻:</label>
-    <input type="time" id="timeInput" value="12:00">
+    <label for="timeInput" style="display:block; text-align:left; font-size:0.9em; color:#718096;">送信時刻:</label>
+    <input type="time" id="timeInput2" value="12:00">
     
     <button id="sendBtn" class="btn-send" disabled>えさやり時刻を送信</button>
 </div>
@@ -154,7 +154,7 @@
         if (!writer) return;
 
         // 時刻文字列（"HH:MM"）を取得
-        const timeVal = timeInput.value; 
+        const timeVal = timeInput2.value; 
         if (!timeVal) {
             alert("時刻を入力してください。");
             return;
@@ -252,7 +252,7 @@
             currentTimeDisp.textContent = formatToTimeString(timeNum);
         } else {
             // 【10000未満の場合】設定時刻の欄に上書き表示
-            timeInput.value = formatToTimeString(num);
+            timeInput1.value = formatToTimeString(num);
         }
     }
 
