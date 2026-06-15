@@ -139,6 +139,8 @@
             statusDiv.classList.add('connected');
             connectBtn.textContent = "接続解除";
             sendBtn.disabled = false;
+           esayari.disabled = false;
+           teishi.disabled = false;
 
         } catch (error) {
             console.error("接続エラー:", error);
